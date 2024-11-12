@@ -1,7 +1,5 @@
 import selectors from './selectors';
 
-import $ from 'jquery';
-
 type Options = {
     // frequency at which to process and reply chats
     tickInterval?: number,
