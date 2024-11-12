@@ -186,6 +186,7 @@ class DoubiBot {
     _call_apps(reqCtx: ReqCtx, resCtx: ResCtx) {
         for (const app of this.apps) {
             const { name, regExp, handler } = app;
+            handler.bind(app);
 
             try {
                 if (regExp.test(reqCtx.message.content)) {
