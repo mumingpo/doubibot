@@ -1,6 +1,6 @@
 import selectors from './selectors';
 
-const $ = document.querySelector;
+const $ = <T extends HTMLElement = HTMLElement>(selector: string) => (document.querySelector<T>(selector));
 
 type Options = {
     // frequency at which to process and reply chats
@@ -198,19 +198,16 @@ class DoubiBot {
     }
 
     _tick() {
-        const usernameSpanElement = $<HTMLSpanElement>(selectors.username);
-        const hostnameAnchorElement = $<HTMLAnchorElement>(selectors.hostname);
+        const username = $<HTMLSpanElement>(selectors.username)?.innerText ?? null;
+        const hostname = $<HTMLAnchorElement>(selectors.hostname)?.innerText ?? null;
 
         if (
-            usernameSpanElement === null ||
-            hostnameAnchorElement === null
+            username === null ||
+            hostname === null
         ) {
             console.error('Unable to find username/hostname.');
             return;
         }
-
-        const username = usernameSpanElement.innerText;
-        const hostname = hostnameAnchorElement.innerText;
 
         this._reconcileChatHistory();
 
@@ -262,6 +259,7 @@ class DoubiBot {
         }
 
         clearInterval(this.pid);
+        this.pid = null;
     }
 }
 
