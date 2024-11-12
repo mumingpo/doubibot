@@ -4,8 +4,6 @@ type BWindow = Window & typeof globalThis & {
     $: <T extends HTMLElement = HTMLElement>(selector: string) => T | null,
 };
 
-const { $ } = window as BWindow;
-
 type Options = {
     // frequency at which to process and reply chats
     tickInterval?: number,
@@ -81,6 +79,8 @@ class DoubiBot {
     }
 
     _send(message: string) {
+        const { $ } = window as BWindow;
+
         const truncated = message.substring(0, 20);
 
         const textarea = $<HTMLTextAreaElement>(selectors.chatInputTextrea);
@@ -116,6 +116,8 @@ class DoubiBot {
     }
 
     _reconcileChatHistory() {
+        const { $ } = window as BWindow;
+
         const chatHistory = $<HTMLDivElement>(selectors.chatHistory);
 
         if (chatHistory === null) {
@@ -202,6 +204,8 @@ class DoubiBot {
     }
 
     _tick() {
+        const { $ } = window as BWindow;
+
         const usernameSpanElement = $<HTMLSpanElement>(selectors.username);
         const hostnameAnchorElement = $<HTMLAnchorElement>(selectors.hostname);
 
