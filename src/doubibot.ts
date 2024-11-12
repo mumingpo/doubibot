@@ -176,30 +176,26 @@ class DoubiBot {
             } else {
                 this.chatHistoryBuffer.push(message);
             }
+        }
 
-            if (this.chatHistoryBuffer.length > 0) {
-                this.lastProcessedIncomingMessageId = this.chatHistoryBuffer[this.chatHistoryBuffer.length - 1].id;
-            }
+        if (this.chatHistoryBuffer.length > 0) {
+            this.lastProcessedIncomingMessageId = this.chatHistoryBuffer[this.chatHistoryBuffer.length - 1].id;
         }
     }
 
     _call_apps(reqCtx: ReqCtx, resCtx: ResCtx) {
         for (const app of this.apps) {
-            const { name, regExp, handler } = app;
-            handler.bind(app);
-
             try {
-                if (regExp.test(reqCtx.message.content)) {
-                    const handled = handler(reqCtx, resCtx);
+                if (app.regExp.test(reqCtx.message.content)) {
+                    const handled = app.handler(reqCtx, resCtx);
                     if (handled) {
                         return;
                     }
                 }
             } catch (e) {
-                console.error(`App "${name}" encountered the following error:\n\t${e}`);
+                console.error(`App "${app.name}" encountered the following error:\n\t${e}`);
             }
         }
-
     }
 
     _tick() {
