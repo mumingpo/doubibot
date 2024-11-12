@@ -176,6 +176,10 @@ class DoubiBot {
             } else {
                 this.chatHistoryBuffer.push(message);
             }
+
+            if (this.chatHistoryBuffer.length > 0) {
+                this.lastProcessedIncomingMessageId = this.chatHistoryBuffer[this.chatHistoryBuffer.length - 1].id;
+            }
         }
     }
 
