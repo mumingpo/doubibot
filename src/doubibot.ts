@@ -1,8 +1,6 @@
 import selectors from './selectors';
 
-type BWindow = Window & typeof globalThis & {
-    $: <T extends HTMLElement = HTMLElement>(selector: string) => T | null,
-};
+import $ from 'jquery';
 
 type Options = {
     // frequency at which to process and reply chats
@@ -79,8 +77,6 @@ class DoubiBot {
     }
 
     _send(message: string) {
-        const { $ } = window as BWindow;
-
         const truncated = message.substring(0, 20);
 
         const textarea = $<HTMLTextAreaElement>(selectors.chatInputTextrea);
@@ -100,8 +96,8 @@ class DoubiBot {
         }
 
         this.lastMessageSubmissionTimestamp = Date.now();
-        textarea.value = truncated;
-        textarea.dispatchEvent(new Event('input'));
+        textarea.val(truncated);
+        textarea.trigger('input');
 
         // wait for vue or whatever engine to tick before submitting
         setTimeout(
@@ -109,15 +105,13 @@ class DoubiBot {
                 if (this.verbose) {
                     console.log(`Sending message: "${truncated}".`);
                 }
-                submitButton.dispatchEvent(new Event('click'));
+                submitButton.trigger('click');
             },
             this.replyDelay,
         );
     }
 
     _reconcileChatHistory() {
-        const { $ } = window as BWindow;
-
         const chatHistory = $<HTMLDivElement>(selectors.chatHistory);
 
         if (chatHistory === null) {
@@ -127,7 +121,7 @@ class DoubiBot {
 
         if (this.lastProcessedIncomingMessageId === null) {
             // on initialization, set lastProcessedIncomingMessageId to last id in history
-            for (const child of chatHistory.children) {
+            for (const child of chatHistory.children()) {
                 const messageId = child.getAttribute('data-ct');
 
                 if (messageId !== null) {
@@ -143,7 +137,7 @@ class DoubiBot {
 
         this.chatHistoryBuffer = [];
 
-        for (const child of chatHistory.children) {
+        for (const child of chatHistory.children()) {
             const messageId = child.getAttribute('data-ct');
             const username = child.getAttribute('data-uname');
             const content = child.getAttribute('data-danmaku');
@@ -204,8 +198,6 @@ class DoubiBot {
     }
 
     _tick() {
-        const { $ } = window as BWindow;
-
         const usernameSpanElement = $<HTMLSpanElement>(selectors.username);
         const hostnameAnchorElement = $<HTMLAnchorElement>(selectors.hostname);
 
@@ -217,8 +209,8 @@ class DoubiBot {
             return;
         }
 
-        const username = usernameSpanElement.innerText;
-        const hostname = hostnameAnchorElement.innerText;
+        const username = usernameSpanElement.text();
+        const hostname = hostnameAnchorElement.text();
 
         this._reconcileChatHistory();
 
