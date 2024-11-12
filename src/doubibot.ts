@@ -1,5 +1,7 @@
 import selectors from './selectors';
 
+const $ = document.querySelector;
+
 type Options = {
     // frequency at which to process and reply chats
     tickInterval?: number,
@@ -94,8 +96,8 @@ class DoubiBot {
         }
 
         this.lastMessageSubmissionTimestamp = Date.now();
-        textarea.val(truncated);
-        textarea.trigger('input');
+        textarea.value = truncated;
+        textarea.dispatchEvent(new Event('input'));
 
         // wait for vue or whatever engine to tick before submitting
         setTimeout(
@@ -103,7 +105,7 @@ class DoubiBot {
                 if (this.verbose) {
                     console.log(`Sending message: "${truncated}".`);
                 }
-                submitButton.trigger('click');
+                submitButton.dispatchEvent(new Event('click'));
             },
             this.replyDelay,
         );
@@ -119,7 +121,7 @@ class DoubiBot {
 
         if (this.lastProcessedIncomingMessageId === null) {
             // on initialization, set lastProcessedIncomingMessageId to last id in history
-            for (const child of chatHistory.children()) {
+            for (const child of chatHistory.children) {
                 const messageId = child.getAttribute('data-ct');
 
                 if (messageId !== null) {
@@ -135,7 +137,7 @@ class DoubiBot {
 
         this.chatHistoryBuffer = [];
 
-        for (const child of chatHistory.children()) {
+        for (const child of chatHistory.children) {
             const messageId = child.getAttribute('data-ct');
             const username = child.getAttribute('data-uname');
             const content = child.getAttribute('data-danmaku');
@@ -207,8 +209,8 @@ class DoubiBot {
             return;
         }
 
-        const username = usernameSpanElement.text();
-        const hostname = hostnameAnchorElement.text();
+        const username = usernameSpanElement.innerText;
+        const hostname = hostnameAnchorElement.innerText;
 
         this._reconcileChatHistory();
 
