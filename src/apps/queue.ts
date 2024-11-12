@@ -19,7 +19,7 @@ function _posToStr(n: number) {
  */
 class Queue implements App {
     name = 'queue'
-    regExp = /^#排队帮助$|^#排队$|^#取消排队$|^#当前$|^#下一(?:个|位)$|^#我的位置$/g
+    regExp = /^排队帮助$|^排队$|^取消排队$|^当前$|^下一(?:个|位)$|^我的位置$/g
 
     _q: Array<string>;
 
@@ -43,22 +43,22 @@ class Queue implements App {
         }
 
         // publicly accessible routes
-        if (/^#排队帮助$/g.test(content)) {
+        if (/^排队帮助$/g.test(content)) {
             return this._handleHelp(reqCtx, resCtx);
-        } else if (/^#当前$/g.test(content)) {
+        } else if (/^当前$/g.test(content)) {
             return this._handlePeep(reqCtx, resCtx);
         } else if (sender === hostname) {
             // host routes
-            if (/^#下一(?:个|位)$/g.test(content)) {
+            if (/^下一(?:个|位)$/g.test(content)) {
                 return this._handlePop(reqCtx, resCtx);
             }
         } else {
             // guest routes
-            if (/^#排队$/g.test(content)) {
+            if (/^排队$/g.test(content)) {
                 return this._handleEnqueue(reqCtx, resCtx);
-            } else if (/^#取消排队$/g.test(content)) {
+            } else if (/^取消排队$/g.test(content)) {
                 return this._handleDequeue(reqCtx, resCtx);
-            } else if (/^#我的位置$/g.test(content)) {
+            } else if (/^我的位置$/g.test(content)) {
                 return this._handleIndexOf(reqCtx, resCtx);
             }
         }
@@ -78,9 +78,9 @@ class Queue implements App {
         } = reqCtx;
 
         if (hostname === sender) {
-            resCtx.send('主播指令:#当前,#下一位');
+            resCtx.send('主播指令:当前,下一位');
         } else {
-            resCtx.send('观众指令:#排队,#取消排队,#我的位置');
+            resCtx.send('观众指令:排队,取消排队,我的位置');
         }
 
         return true;
