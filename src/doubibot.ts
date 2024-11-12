@@ -181,11 +181,11 @@ class DoubiBot {
 
         if (this.chatHistoryBuffer.length > 0) {
             this.lastProcessedIncomingMessageId = this.chatHistoryBuffer[this.chatHistoryBuffer.length - 1].id;
-        }
 
-        if (this.verbose) {
-            console.log('Incoming messages:');
-            console.log(this.chatHistoryBuffer);
+            if (this.verbose) {
+                console.log('Incoming messages:');
+                console.log(this.chatHistoryBuffer);
+            }
         }
     }
 
