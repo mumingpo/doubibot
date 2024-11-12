@@ -149,10 +149,11 @@ class DoubiBot {
                 content === null ||
                 timestampStr === null
             ) {
-                if (this.verbose) {
-                    console.log('The following chatHistory entry cannot be parsed and has been skipped.');
-                    console.log(child);
-                }
+                // too verbose
+                // if (this.verbose) {
+                //     console.log('The following chatHistory entry cannot be parsed and has been skipped.');
+                //     console.log(child);
+                // }
                 continue;
             }
 
@@ -220,7 +221,7 @@ class DoubiBot {
             };
 
             const resCtx: ResCtx = {
-                send: this._send,
+                send: (s: string) => { this._send(s) },
             };
 
             this._call_apps(reqCtx, resCtx);
