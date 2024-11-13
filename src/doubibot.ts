@@ -1,77 +1,99 @@
-import selectors from './selectors';
+import selectors from "./selectors";
 
-const $ = <T extends HTMLElement = HTMLElement>(selector: string) => (document.querySelector<T>(selector));
+const PROCESSED_ATTRIBUTE_NAME = "data-dbb-processed";
 
 type Options = {
     // frequency at which to process and reply chats
-    tickInterval?: number,
+    tickInterval?: number;
 
     // minimum interval between replies
-    minReplyInterval?: number,
+    minReplyInterval?: number;
 
     // delay after setting reply in textarea before sending
-    replyDelay?: number,
+    replyDelay?: number;
 
-    verbose?: boolean,
+    verbose?: boolean;
 
-    autorun?: boolean,
+    autorun?: boolean;
+};
+
+const defaultOptions: Required<Options> = {
+    tickInterval: 1000,
+    minReplyInterval: 1000,
+    replyDelay: 100,
+    verbose: false,
+    autorun: true,
 };
 
 type Message = {
-    id: string,
-    sender: string,
-    content: string,
-    timestamp: number,
+    id: string;
+    sender: string;
+    content: string;
+    timestamp: number;
 };
 
 type ReqCtx = {
-    username: string,
-    hostname: string,
-    message: Message,
+    username: string;
+    hostname: string;
+    message: Message;
 };
 
 type ResCtx = {
-    send: (s: string) => void,
-}
+    send: (s: string) => void;
+};
 
 // return whether if the request has been handled completely.
-type Handler = (reqCtx: ReqCtx, resCtx: ResCtx) => boolean;
+type Handled = boolean;
+type Handler = (reqCtx: ReqCtx, resCtx: ResCtx) => Handled;
 
 type App = {
-    name: string,
-    regExp: RegExp,
-    handler: Handler,
+    name: string;
+    regExp: RegExp;
+    handler: Handler;
+};
+
+const $ = <T extends HTMLElement = HTMLElement>(selector: string) =>
+    document.querySelector<T>(selector);
+
+const info = (message: string, data?: unknown) => {
+    console.log({ message, data });
+};
+
+const error = (message: string, data?: unknown) => {
+    console.log({ message, data });
 };
 
 class DoubiBot {
-    pid: ReturnType<typeof setInterval> | null
+    pid: ReturnType<typeof setInterval> | null;
+    hostname: string;
+    username: string;
 
     apps: Array<App>;
-    chatHistoryBuffer: Array<Message>;
 
-    lastProcessedIncomingMessageId: string | null
-    lastMessageSubmissionTimestamp: number
+    lastMessageSubmissionTimestamp: number;
 
-    tickInterval: number
-    minReplyInterval: number
-    replyDelay: number
-    verbose: boolean
+    tickInterval: number;
+    minReplyInterval: number;
+    replyDelay: number;
+    verbose: boolean;
 
     constructor(options?: Options) {
-        this.pid = null
+        this.pid = null;
+        this.hostname = "";
+        this.username = "";
 
         this.apps = [];
-        this.chatHistoryBuffer = [];
 
-        this.lastProcessedIncomingMessageId = null;
         this.lastMessageSubmissionTimestamp = Number.NEGATIVE_INFINITY;
 
-        this.tickInterval = options?.tickInterval ?? 1000;
-        this.minReplyInterval = options?.minReplyInterval ?? 1000;
-        this.replyDelay = options?.replyDelay ?? 100;
-        this.verbose = options?.verbose ?? false;
+        const fullOptions = { ...defaultOptions, ...options };
 
-        if ((options?.autorun ?? true) === true) {
+        this.tickInterval = fullOptions.tickInterval;
+        this.minReplyInterval = fullOptions.minReplyInterval;
+        this.replyDelay = fullOptions.replyDelay;
+        this.verbose = fullOptions.verbose;
+
+        if (fullOptions.autorun === true) {
             this.start();
         }
     }
@@ -80,16 +102,21 @@ class DoubiBot {
         const truncated = message.substring(0, 20);
 
         const textarea = $<HTMLTextAreaElement>(selectors.chatInputTextrea);
-        const submitButton = $<HTMLButtonElement>(selectors.chatInputSubmitButton);
+        const submitButton = $<HTMLButtonElement>(
+            selectors.chatInputSubmitButton,
+        );
 
         if (textarea === null || submitButton === null) {
-            console.error('Unable to find textarea and submit button for chat.');
+            error("Unable to find textarea and submit button for chat.");
             return;
         }
 
-        if (Date.now() < this.lastMessageSubmissionTimestamp + this.minReplyInterval) {
+        if (
+            Date.now() <
+            this.lastMessageSubmissionTimestamp + this.minReplyInterval
+        ) {
             if (this.verbose) {
-                console.log(`Message unsent: "${truncated}".`)
+                info("Message unsent due to reply rate limit.", truncated);
             }
 
             return;
@@ -97,51 +124,39 @@ class DoubiBot {
 
         this.lastMessageSubmissionTimestamp = Date.now();
         textarea.value = truncated;
-        textarea.dispatchEvent(new Event('input'));
+        textarea.dispatchEvent(new Event("input"));
 
-        // wait for vue or whatever engine to tick before submitting
-        setTimeout(
-            () => {
-                if (this.verbose) {
-                    console.log(`Sending message: "${truncated}".`);
-                }
-                submitButton.dispatchEvent(new Event('click'));
-            },
-            this.replyDelay,
-        );
+        // HACK: wait for vue or whatever engine to populate value
+        // from dom textarea before submitting
+        setTimeout(() => {
+            if (this.verbose) {
+                info("Sending message.", truncated);
+            }
+            submitButton.dispatchEvent(new Event("click"));
+        }, this.replyDelay);
     }
 
-    _reconcileChatHistory() {
+    _getNewMessages() {
+        const messages: Array<Message> = [];
+
         const chatHistory = $<HTMLDivElement>(selectors.chatHistory);
 
         if (chatHistory === null) {
-            console.error('Unable to find chat history.');
-            return;
+            error("Unable to find chat history.");
+            return messages;
         }
-
-        if (this.lastProcessedIncomingMessageId === null) {
-            // on initialization, set lastProcessedIncomingMessageId to last id in history
-            for (const child of chatHistory.children) {
-                const messageId = child.getAttribute('data-ct');
-
-                if (messageId !== null) {
-                    this.lastProcessedIncomingMessageId = messageId;
-                }
-            }
-
-            // if there are no message with id in history, set lastProcessed to empty string
-            if (this.lastProcessedIncomingMessageId === null) {
-                this.lastProcessedIncomingMessageId = '';
-            }
-        }
-
-        this.chatHistoryBuffer = [];
 
         for (const child of chatHistory.children) {
-            const messageId = child.getAttribute('data-ct');
-            const username = child.getAttribute('data-uname');
-            const content = child.getAttribute('data-danmaku');
-            const timestampStr = child.getAttribute('data-timestamp');
+            const messageId = child.getAttribute("data-ct");
+            const username = child.getAttribute("data-uname");
+            const content = child.getAttribute("data-danmaku");
+            const timestampStr = child.getAttribute("data-timestamp");
+            const processed =
+                child.getAttribute(PROCESSED_ATTRIBUTE_NAME) !== null;
+
+            if (processed) {
+                continue;
+            }
 
             if (
                 messageId === null ||
@@ -149,11 +164,9 @@ class DoubiBot {
                 content === null ||
                 timestampStr === null
             ) {
-                // too verbose
-                // if (this.verbose) {
-                //     console.log('The following chatHistory entry cannot be parsed and has been skipped.');
-                //     console.log(child);
-                // }
+                if (this.verbose) {
+                    info("Unparsable chat entry.", child);
+                }
                 continue;
             }
 
@@ -170,23 +183,17 @@ class DoubiBot {
                 sender: username,
                 content,
                 timestamp,
-            }
-            
-            if (messageId === this.lastProcessedIncomingMessageId) {
-                this.chatHistoryBuffer = [];
-            } else {
-                this.chatHistoryBuffer.push(message);
-            }
+            };
+
+            child.setAttribute(PROCESSED_ATTRIBUTE_NAME, "");
+            messages.push(message);
         }
 
-        if (this.chatHistoryBuffer.length > 0) {
-            this.lastProcessedIncomingMessageId = this.chatHistoryBuffer[this.chatHistoryBuffer.length - 1].id;
-
-            if (this.verbose) {
-                console.log('Incoming messages:');
-                console.log(this.chatHistoryBuffer);
-            }
+        if (this.verbose) {
+            info("New messages.", messages);
         }
+
+        return messages;
     }
 
     _call_apps(reqCtx: ReqCtx, resCtx: ResCtx) {
@@ -199,34 +206,25 @@ class DoubiBot {
                     }
                 }
             } catch (e) {
-                console.error(`App "${app.name}" encountered the following error:\n\t${e}`);
+                error(`App "${app.name}" encountered an error.`, e);
             }
         }
     }
 
     _tick() {
-        const username = $<HTMLSpanElement>(selectors.username)?.innerText ?? null;
-        const hostname = $<HTMLAnchorElement>(selectors.hostname)?.innerText ?? null;
+        const messages = this._getNewMessages();
 
-        if (
-            username === null ||
-            hostname === null
-        ) {
-            console.error('Unable to find username/hostname.');
-            return;
-        }
-
-        this._reconcileChatHistory();
-
-        for (const message of this.chatHistoryBuffer) {
+        for (const message of messages) {
             const reqCtx: ReqCtx = {
-                username,
-                hostname,
+                username: this.username,
+                hostname: this.hostname,
                 message,
             };
 
             const resCtx: ResCtx = {
-                send: (s: string) => { this._send(s) },
+                send: (s: string) => {
+                    this._send(s);
+                },
             };
 
             this._call_apps(reqCtx, resCtx);
@@ -246,14 +244,32 @@ class DoubiBot {
      */
     start() {
         if (this.pid !== null) {
-            console.error('Already running!');
+            error("Already running!");
             return;
         }
 
-        this.pid = setInterval(
-            () => { this._tick() },
-            this.tickInterval,
-        );
+        const username =
+            $<HTMLSpanElement>(selectors.username)?.innerText ?? null;
+        const hostname =
+            $<HTMLAnchorElement>(selectors.hostname)?.innerText ?? null;
+
+        if (username === null || hostname === null) {
+            error("Unable to find username/hostname.");
+            return;
+        }
+        if (username === hostname) {
+            error("IMPORTANT: do not use host account to run this bot.");
+        }
+
+        this.username = username;
+        this.hostname = hostname;
+
+        // label all existing messages as processed
+        this._getNewMessages();
+
+        this.pid = setInterval(() => {
+            this._tick();
+        }, this.tickInterval);
     }
 
     /**
@@ -261,7 +277,7 @@ class DoubiBot {
      */
     stop() {
         if (this.pid === null) {
-            console.error('Not running!');
+            error("Not running!");
             return;
         }
 
@@ -272,11 +288,4 @@ class DoubiBot {
 
 export default DoubiBot;
 
-export type {
-    Options,
-    Message,
-    ReqCtx,
-    ResCtx,
-    Handler,
-    App,
-};
+export type { Options, Message, ReqCtx, ResCtx, Handler, App };

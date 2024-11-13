@@ -9,7 +9,7 @@ Log in and go to target streaming room. In F12 developer console, type in:
 登录某站并进入直播间. 在f12控制台, 输入:
 
 ```javascript
-const bot = (await import('https://unpkg.com/doubibot@0.1.12')).default();
+const bot = (await import("https://unpkg.com/doubibot@0.2.0")).default();
 ```
 
 and hit enter. To enable detailed logging, type in:

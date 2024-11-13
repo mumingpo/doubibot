@@ -1,5 +1,5 @@
-import DoubiBot from './doubibot';
-import Queue from './apps/queue';
+import DoubiBot from "./doubibot";
+import Queue from "./apps/queue";
 
 export default () => {
     const bot = new DoubiBot();
