@@ -105,10 +105,10 @@ class Queue implements App {
         const position = this._q.indexOf(sender);
 
         if (position === -1) {
-            resCtx.send('你不在队列中!');
+            resCtx.send('你不在队列中(');
         } else {
             this._q.splice(position, 1);
-            resCtx.send('取消排队成功!');
+            resCtx.send('取消排队成功(');
         }
 
         return true;
@@ -119,7 +119,7 @@ class Queue implements App {
         const position = this._q.indexOf(sender);
 
         if (position === -1) {
-            resCtx.send('你不在队列中!');
+            resCtx.send('你不在队列中(');
         } else {
             resCtx.send(`你的位置:${_posToStr(position)}`);
         }
@@ -128,7 +128,7 @@ class Queue implements App {
     }
     _handlePeep(_: ReqCtx, resCtx: ResCtx) {
         if (this._q.length === 0) {
-            resCtx.send('都嘟完辣!');
+            resCtx.send('都嘟完辣(');
         } else {
             resCtx.send(`当前:${this._q[0]}`);
         }
@@ -136,10 +136,10 @@ class Queue implements App {
         return true;
     }
     _handlePop(_: ReqCtx, resCtx: ResCtx) {
+        this._q.shift();
         if (this._q.length === 0) {
-            resCtx.send('都嘟完辣!');
+            resCtx.send('都嘟完辣(');
         } else {
-            this._q.shift();
             resCtx.send(`下一个:${this._q[0]}`);
         }
 
