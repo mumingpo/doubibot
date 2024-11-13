@@ -157,6 +157,7 @@ class DoubiBot {
             if (processed) {
                 continue;
             }
+            child.setAttribute(PROCESSED_ATTRIBUTE_NAME, "");
 
             if (
                 messageId === null ||
@@ -184,12 +185,10 @@ class DoubiBot {
                 content,
                 timestamp,
             };
-
-            child.setAttribute(PROCESSED_ATTRIBUTE_NAME, "");
             messages.push(message);
         }
 
-        if (this.verbose) {
+        if (this.verbose && messages.length > 0) {
             info("New messages.", messages);
         }
 
