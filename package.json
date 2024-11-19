@@ -4,29 +4,20 @@
     "main": "build/index.js",
     "types": "build/index.d.ts",
     "scripts": {
-        "prepare": "tsc",
         "build": "tsc",
-        "start": "ts-node src/index.ts",
-        "prettier": "prettier -c **/*"
+        "start": "ts-node src/index.ts"
     },
     "keywords": [],
     "author": "mumingpo",
     "repository": "github:mumingpo/doubibot",
     "license": "MIT",
     "description": "",
-    "husky": {
-        "hooks": {
-            "pre-commit": "pretty-quick --staged"
-        }
-    },
     "devDependencies": {
         "@eslint/js": "^9.14.0",
         "@types/node": "^20.17.6",
         "eslint": "^9.14.0",
         "globals": "^15.12.0",
-        "husky": "^9.1.6",
         "prettier": "^3.3.3",
-        "pretty-quick": "^4.0.0",
         "ts-node": "^10.9.2",
         "typescript": "^5.6.3",
         "typescript-eslint": "^8.14.0"
