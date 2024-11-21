@@ -1,5 +1,7 @@
 import selectors from "./selectors";
 
+import { version } from "../package.json" with { type: "json" };
+
 const PROCESSED_ATTRIBUTE_NAME = "data-dbb-processed";
 
 type Options = {
@@ -60,7 +62,7 @@ const info = (message: string, data?: unknown) => {
 };
 
 const error = (message: string, data?: unknown) => {
-    console.log({ message, data });
+    console.error({ message, data });
 };
 
 class DoubiBot {
@@ -269,6 +271,11 @@ class DoubiBot {
         this.pid = setInterval(() => {
             this._tick();
         }, this.tickInterval);
+
+        info("DoubiBot is now running.", {
+            version,
+            pid: this.pid,
+        });
     }
 
     /**
@@ -281,7 +288,13 @@ class DoubiBot {
         }
 
         clearInterval(this.pid);
+        const { pid } = this;
         this.pid = null;
+
+        info("DoubiBot has stopped.", {
+            version,
+            pid,
+        });
     }
 }
 

@@ -1,16 +1,16 @@
 import DoubiBot from "./doubibot";
 import Queue from "./apps/queue";
 
-let defaultInstance: null | DoubiBot = null;
-
-export default () => {
-    if (defaultInstance === null) {
-        defaultInstance = new DoubiBot();
+let _defaultInstance: null | DoubiBot = null;
+const _default = () => {
+    if (_defaultInstance === null) {
+        _defaultInstance = new DoubiBot();
         const queueApp = new Queue();
-        defaultInstance.use(queueApp);
+        _defaultInstance.use(queueApp);
     }
 
-    return defaultInstance;
+    return _defaultInstance;
 };
 
+export default _default;
 export { DoubiBot, Queue };
