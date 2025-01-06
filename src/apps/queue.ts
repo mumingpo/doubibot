@@ -14,12 +14,14 @@ function _posToStr(n: number) {
  */
 class Queue implements App {
     name = "queue";
-    regExp = /^排队帮助$|^排队$|^取消排队$|^当前$|^下一(?:个|位)$|^我的位置$/g;
+    regExp = /.*/g;
 
     _q: Array<string>;
+    _active: boolean
 
     constructor() {
         this._q = [];
+        this._active = true;
     }
 
     handler(reqCtx: ReqCtx, resCtx: ResCtx) {
@@ -34,24 +36,27 @@ class Queue implements App {
             return this._handleHelp(reqCtx, resCtx);
         } else if (/^当前$/g.test(content)) {
             return this._handlePeep(reqCtx, resCtx);
+        } else if (/^人数$/g.test(content)) {
+            return this._handleLength(reqCtx, resCtx);
         } else if (sender === hostname || sender === username) {
             // host routes
             if (/^下一(?:个|位)$/g.test(content)) {
                 return this._handlePop(reqCtx, resCtx);
+            } else if (/^开始$/g.test(content)) {
+                return this._handleStart(reqCtx, resCtx);
+            } else if (/^停止$/g.test(content)) {
+                return this._handleStop(reqCtx, resCtx);
             }
         } else {
             // guest routes
             if (/^排队$/g.test(content)) {
                 return this._handleEnqueue(reqCtx, resCtx);
-            } else if (/^取消排队$/g.test(content)) {
+            } else if (/^取消(?:排队)?$/g.test(content)) {
                 return this._handleDequeue(reqCtx, resCtx);
             } else if (/^我的位置$/g.test(content)) {
                 return this._handleIndexOf(reqCtx, resCtx);
             }
         }
-
-        console.error("Unhandled request in Queue app:");
-        console.error(reqCtx);
 
         return false;
     }
@@ -63,15 +68,35 @@ class Queue implements App {
         } = reqCtx;
 
         if (hostname === sender) {
-            resCtx.send("主播指令:当前,下一位");
+            resCtx.send("主播指令:当前,下一位,开始,停止");
         } else {
-            resCtx.send("观众指令:排队,取消排队,我的位置");
+            resCtx.send("观众指令:排队,取消,人数,我的位置");
         }
+
+        return true;
+    }
+    _handleStart(_: ReqCtx, resCtx: ResCtx) {
+        this._active = true;
+
+        resCtx.send('开嘟!')
+
+        return true;
+    }
+    _handleStop(_: ReqCtx, resCtx: ResCtx) {
+        this._active = false;
+
+        resCtx.send('停嘟!')
 
         return true;
     }
     _handleEnqueue(reqCtx: ReqCtx, resCtx: ResCtx) {
         const { sender } = reqCtx.message;
+
+        if (!this._active) {
+            resCtx.send('不嘟辣!')
+
+            return true;
+        }
 
         const position = this._q.indexOf(sender);
 
@@ -94,6 +119,15 @@ class Queue implements App {
         } else {
             this._q.splice(position, 1);
             resCtx.send("取消排队成功(");
+        }
+
+        return true;
+    }
+    _handleLength(_: ReqCtx, resCtx: ResCtx) {
+        if (this._q.length <= 1) {
+            resCtx.send("当前没有人在排队(");
+        } else {
+            resCtx.send(`当前队列中有${this._q.length - 1}人.`);
         }
 
         return true;
