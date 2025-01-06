@@ -212,6 +212,24 @@ class DoubiBot {
         }
     }
 
+    _test = (msg: string, sender?: string | undefined) => {
+        this._call_apps(
+            {
+                username: this.username,
+                hostname: this.hostname,
+                message: {
+                    id: 'ababababa',
+                    sender: sender ?? this.username,
+                    content: msg,
+                    timestamp: (new Date()).valueOf(),
+                },
+            },
+            {
+                send: (msg) => { this._send(msg); }
+            },
+        );
+    };
+
     _tick() {
         const messages = this._getNewMessages();
 

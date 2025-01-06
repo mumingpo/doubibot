@@ -12,5 +12,16 @@ const _default = () => {
     return _defaultInstance;
 };
 
+const dummy = () => {
+    const instance = new DoubiBot();
+    const queueApp = new Queue();
+    instance.use(queueApp);
+
+    instance._send = (msg: string) => { console.log(msg); };
+    instance.verbose = true;
+
+    return instance;
+};
+
 export default _default;
-export { DoubiBot, Queue };
+export { DoubiBot, Queue, dummy };
